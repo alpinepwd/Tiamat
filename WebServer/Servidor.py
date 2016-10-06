@@ -1,11 +1,15 @@
 #!/usr/bin/python2.7
+
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 import string
 import re
 import os
-
 RAIZ = "/Documents/PornoDuro/Tiamat/Tiamat/"
 HOME = os.path.expanduser("~")
+
+import sys
+sys.path.insert(0, HOME+RAIZ+'Core')
+import TiamatCore
 
 
 PUERTO = 8888
@@ -71,25 +75,61 @@ class Controlador(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
+        if ruta.endswith(".jpg"):
+            try:
+                archivo = open(HOME+RAIZ+ruta, 'rb')
+                respuesta=""
+                for line in archivo:
+                    respuesta += line
+            
+                self.send_response(200)
+                self.send_header('Content-type', 'image/jpeg')
+                self.end_headers()
+                self.wfile.write(respuesta)
+                return
+            except IOError:
+                self.send_response(404)
+                self.end_headers()
+                return
 
-#
-#        p = re.compile('\.gif$')
-#        if p.match(ruta) != None:
-#            return
-#        
-#        p = re.compile('\.jpg$')
-#        if p.match(ruta) != None:
-#            return
-#        
-#        p = re.compile('\.js$')
-#        if p.match(ruta) != None:
-#            return
-#        
-#        p = re.compile('\.tiff$')
-#        if p.match(ruta) != None:
-#            return
-#        
 
+
+        if ruta.endswith(".js"):
+            try:
+                archivo = open(HOME+RAIZ+ruta, 'rb')
+                respuesta=""
+                for line in archivo:
+                    respuesta += line
+            
+                self.send_response(200)
+                self.send_header('Content-type', 'application/x-javascript')
+                self.end_headers()
+                self.wfile.write(respuesta)
+                return
+            except IOError:
+                self.send_response(404)
+                self.end_headers()
+                return
+    #
+    #        p = re.compile('\.tiff$')
+    #        if p.match(ruta) != None:
+    #            return
+    #
+
+        if ruta.statswith("/Core/"):
+            if(TiamatCore.existsPage(ruta)):
+                respuesta = TiamatCore.processTemplate(ruta)
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                self.wfile.write(respuesta)
+                return
+            else:
+                self.send_response(404)
+                self.end_headers()
+                return
+
+    
 
         if ruta == "/":
             f = open(HOME+RAIZ+'Core/prueba.xhtml', 'r')
@@ -108,12 +148,14 @@ class Controlador(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-        
             self.wfile.write("Hey, funciona")
         return
     
     
 try:
+#    cargar Core
+#    cargar resto de modulos
+    TiamatCore.loadPages('Core')
     print "Iniciando servidor"
     servidor = HTTPServer(('', PUERTO), Controlador)
     servidor.serve_forever()
